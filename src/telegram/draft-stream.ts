@@ -3,7 +3,6 @@ import { createFinalizableDraftLifecycle } from "../channels/draft-stream-contro
 import { buildTelegramThreadParams, type TelegramThreadSpec } from "./bot/helpers.js";
 
 const TELEGRAM_STREAM_MAX_CHARS = 4096;
-const RTL_MARK = "\u200F"; // Unicode Right-to-Left Mark
 const DEFAULT_THROTTLE_MS = 1000;
 const TELEGRAM_DRAFT_ID_MAX = 2_147_483_647;
 const THREAD_NOT_FOUND_RE = /400:\s*Bad Request:\s*message thread not found/i;
@@ -117,6 +116,7 @@ export function createTelegramDraftStream(params: {
     ? resolveSendMessageDraftApi(params.api)
     : undefined;
   const usesDraftTransport = Boolean(prefersDraftTransport && resolvedDraftApi);
+  const isRTL = (text: string) => /[\u0590-\u08FF]/.test(text); // Hebrew, Arabic ranges
   if (prefersDraftTransport && !usesDraftTransport) {
     params.warn?.(
       "telegram stream preview: sendMessageDraft unavailable; falling back to sendMessage/editMessageText",
@@ -143,7 +143,8 @@ export function createTelegramDraftStream(params: {
   }: PreviewSendParams): Promise<boolean> => {
     if (typeof streamMessageId === "number") {
       if (renderedParseMode) {
-        await params.api.editMessageText(chatId, streamMessageId, renderedText, {
+        const textWithRTLM = isRTL(renderedText) ? "\u200F" + renderedText : renderedText;
+      await params.api.editMessageText(chatId, streamMessageId, textWithRTLM, {
           parse_mode: renderedParseMode,
         });
       } else {
