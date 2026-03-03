@@ -231,7 +231,7 @@ export function createTelegramDraftStream(params: {
       return false;
     }
     const rendered = params.renderText?.(trimmed) ?? { text: trimmed };
-    const renderedText = rendered.text.trimEnd();
+    const renderedText = isRTL(rendered.text.trimEnd()) ? "\u200F" + rendered.text.trimEnd() : rendered.text.trimEnd();
     const renderedParseMode = rendered.parseMode;
     if (!renderedText) {
       return false;
