@@ -929,11 +929,16 @@ export async function resolveImplicitProviders(params: {
     allowKeychainPrompt: false,
   });
 
+  const explicitMinimax = params.explicitProviders?.minimax;
   const minimaxKey =
     resolveEnvApiKeyVarName("minimax") ??
     resolveApiKeyFromProfiles({ provider: "minimax", store: authStore });
   if (minimaxKey) {
-    providers.minimax = { ...buildMinimaxProvider(), apiKey: minimaxKey };
+    providers.minimax = {
+      ...buildMinimaxProvider(),
+      ...(explicitMinimax?.baseUrl ? { baseUrl: explicitMinimax.baseUrl } : {}),
+      apiKey: minimaxKey,
+    };
   }
 
   const minimaxOauthProfile = listProfilesForProvider(authStore, "minimax-portal");
